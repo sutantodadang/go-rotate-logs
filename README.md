@@ -1,1 +1,1 @@
-# go-rotate-log
+# go-rotate-logs
