@@ -45,27 +45,27 @@ func New(config Config) *RotateLogsWriter {
 }
 
 // write func to satisfy io.writer interface
-func (r *RotateLogsWriter) Write(output []byte) (int, error) {
+func (w *RotateLogsWriter) Write(output []byte) (int, error) {
 
-	r.mut.Lock()
+	w.mut.Lock()
 
-	defer r.mut.Unlock()
+	defer w.mut.Unlock()
 
-	return r.file.Write(output)
+	return w.file.Write(output)
 
 }
 
-func (r *RotateLogsWriter) Rotate() (err error) {
+func (w *RotateLogsWriter) Rotate() (err error) {
 
-	r.mut.Lock()
+	w.mut.Lock()
 
-	defer r.mut.Unlock()
+	defer w.mut.Unlock()
 
-	if r.file != nil {
+	if w.file != nil {
 
-		err = r.file.Close()
+		err = w.file.Close()
 
-		r.file = nil
+		w.file = nil
 
 		if err != nil {
 			return
@@ -73,26 +73,26 @@ func (r *RotateLogsWriter) Rotate() (err error) {
 
 	}
 
-	err = os.MkdirAll(r.config.Directory, os.ModePerm)
+	err = os.MkdirAll(w.config.Directory, os.ModePerm)
 	if err != nil {
 		return
 	}
 
-	str := strings.Split(r.config.Filename, ".log")
+	str := strings.Split(w.config.Filename, ".log")
 
-	if r.config.UsingTime {
+	if w.config.UsingTime {
 
-		if r.config.FormatTime == "" {
-			r.config.FormatTime = time.RFC3339
+		if w.config.FormatTime == "" {
+			w.config.FormatTime = time.RFC3339
 		}
 
-		r.config.Filename = str[0] + "-" + time.Now().Format(r.config.FormatTime) + ".log"
+		w.config.Filename = str[0] + "-" + time.Now().Format(w.config.FormatTime) + ".log"
 
 	}
 
-	pathFile := filepath.Join(r.config.Directory, r.config.Filename)
+	pathFile := filepath.Join(w.config.Directory, w.config.Filename)
 
-	dir, err := os.ReadDir(r.config.Filename)
+	dir, err := os.ReadDir(w.config.Filename)
 	if err != nil {
 		return
 	}
@@ -101,13 +101,13 @@ func (r *RotateLogsWriter) Rotate() (err error) {
 	if err == nil {
 
 		// if file size over maxsize rename to backup and create new file
-		if (info.Size() / 1000000) > int64(r.config.MaxSize) {
+		if (info.Size() / 1000000) > int64(w.config.MaxSize) {
 
-			newStr := strings.Split(r.config.Filename, ".log")
+			newStr := strings.Split(w.config.Filename, ".log")
 
 			i := strconv.Itoa(len(dir))
 
-			err = os.Rename(pathFile, filepath.Join(r.config.Directory, newStr[0]+"-"+r.config.BackupName+"-"+i+".log"))
+			err = os.Rename(pathFile, filepath.Join(w.config.Directory, newStr[0]+"-"+w.config.BackupName+"-"+i+".log"))
 			if err != nil {
 				return
 			}
@@ -118,7 +118,7 @@ func (r *RotateLogsWriter) Rotate() (err error) {
 		return
 	}
 
-	r.file, err = os.OpenFile(pathFile, os.O_CREATE|os.O_APPEND, os.ModePerm)
+	w.file, err = os.OpenFile(pathFile, os.O_CREATE|os.O_APPEND, os.ModePerm)
 	if err != nil {
 		return
 	}
