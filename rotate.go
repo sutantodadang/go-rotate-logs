@@ -75,6 +75,8 @@ func (w *RotateLogsWriter) Write(p []byte) (n int, err error) {
 
 func (w *RotateLogsWriter) Rotate(p []byte) (err error) {
 
+	tempFilename := w.Config.Filename
+
 	if w.Config.Directory == "" {
 		err = errors.New("no dir. plase provided")
 		return
@@ -146,6 +148,9 @@ func (w *RotateLogsWriter) Rotate(p []byte) (err error) {
 			return
 		}
 
+		// reset filename
+		w.Config.Filename = tempFilename
+
 		return
 
 	}
@@ -154,6 +159,9 @@ func (w *RotateLogsWriter) Rotate(p []byte) (err error) {
 	if err != nil {
 		return
 	}
+
+	// reset filename
+	w.Config.Filename = tempFilename
 
 	return
 
