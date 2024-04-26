@@ -12,29 +12,29 @@ import (
 )
 
 type Config struct {
+	// if true it will remove file with mod time before MaxAge
+	CleanOldFiles bool
+
+	// if true it will add "-" + FormatTime
+	UsingTime bool
+
+	// required in Megabyte MB. etc: 10 is equal to 10MB
+	MaxSize int
+
+	// required CleanOldFiles true. if not provide it will default using 7. etc: equal to 7 days before now
+	MaxAge int
+
 	// required
 	Directory string
 
 	// required. name file end .log extension
 	Filename string
 
-	// required in Megabyte MB. etc: 10 is equal to 10MB
-	MaxSize int
-
 	// if not provide it will default use "backup"
 	BackupName string
 
-	// if true it will add "-" + FormatTime
-	UsingTime bool
-
 	// required UsingTime True. if no format it will default using rfc3399
 	FormatTime string
-
-	// if true it will remove file with mod time before MaxAge
-	CleanOldFiles bool
-
-	// required CleanOldFiles true. if not provide it will default using 7. etc: equal to 7 days before now
-	MaxAge int
 }
 
 type RotateLogsWriter struct {
@@ -64,7 +64,7 @@ func (w *RotateLogsWriter) Write(p []byte) (n int, err error) {
 
 	}
 
-	err = w.Rotate(p)
+	err = w.rotate(p)
 	if err != nil {
 		return
 	}
@@ -73,7 +73,7 @@ func (w *RotateLogsWriter) Write(p []byte) (n int, err error) {
 
 }
 
-func (w *RotateLogsWriter) Rotate(p []byte) (err error) {
+func (w *RotateLogsWriter) rotate(p []byte) (err error) {
 
 	tempFilename := w.Config.Filename
 
@@ -131,7 +131,7 @@ func (w *RotateLogsWriter) Rotate(p []byte) (err error) {
 		// if file size over maxsize rename to backup and create new file
 		if ((info.Size() + int64(len(p))) / 1000000) > int64(w.Config.MaxSize) {
 
-			err = w.backup(pathFile)
+			err = w.backup(pathFile, tempFilename)
 			if err != nil {
 				return
 			}
@@ -167,7 +167,7 @@ func (w *RotateLogsWriter) Rotate(p []byte) (err error) {
 
 }
 
-func (w *RotateLogsWriter) backup(pathFile string) (err error) {
+func (w *RotateLogsWriter) backup(pathFile, tempFilename string) (err error) {
 
 	var count int
 
@@ -207,6 +207,9 @@ func (w *RotateLogsWriter) backup(pathFile string) (err error) {
 	if err != nil {
 		return
 	}
+
+	// reset filename
+	w.Config.Filename = tempFilename
 
 	return
 }
